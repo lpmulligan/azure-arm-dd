@@ -1,9 +1,9 @@
 ﻿### Define variables
 {
-$location = 'Australia Southeast'
-$resourceGroupName = 'pluralsight-arm-simple-iaas-template'
-$resourceDeploymentName = 'pluralsight-arm-iaas-template-deployment'
-$templatePath = $env:SystemDrive + '\pluralsight'
+$location = 'North Central US'
+$resourceGroupName = 'lpm-arm-dd-simple-iaas-template'
+$resourceDeploymentName = 'lpm-arm-dd-iaas-template-deployment'
+$templatePath = $env:USERPROFILE + '\Development\Azure\azure-arm-dd\M3'
 $templateFile = 'simpleIaas.json'
 $template = $templatePath + '\' + $templateFile
 }
