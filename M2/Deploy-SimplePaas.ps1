@@ -2,13 +2,13 @@
 ### Define Deployment Variables
 {
 
-$resourceGroupName = 'pluralsight-arm-simple-paas'
+$resourceGroupName = 'lpm-arm-dd-simple-paas'
 $resourceProviderNamespace = 'Microsoft.Web'
 $resourceTypeName = 'sites'
-$resourceGroupLocation = 'Australia Southeast'
+$resourceGroupLocation = 'North Central US'
 
 $randomString = ([char[]]([char]'a'..[char]'z') + 0..9 | Sort-Object {Get-Random})[0..8] -join ''
-$appNamePrefix = 'pluralsight'
+$appNamePrefix = 'lpm-arm-dd'
 $appServicePlanName = $appNamePrefix + $randomString
 $webAppName = $appNamePrefix + $randomString
 
