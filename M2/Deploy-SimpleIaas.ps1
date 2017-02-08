@@ -2,12 +2,12 @@
 ### Define Deployment Variables
 {
 
-$resourceGroupName = 'pluralsight-arm-simple-iaas'
+$resourceGroupName = 'lpm-arm-dd-simple-iaas'
 $resourceProviderNamespace = 'Microsoft.Network'
 $resourceTypeName = 'virtualNetworks'
-$resourceGroupLocation = 'Australia Southeast'
+$resourceGroupLocation = 'North Central US'
 
-$vNetName = 'vnet-pluralsight'
+$vNetName = 'vnet-lpm-arm-dd'
 $vNetAddressPrefix = '172.16.0.0/16'
 $vNetSubnet1Name = 'subnet-1'
 $vNetSubnet1Prefix = '172.16.1.0/24'
