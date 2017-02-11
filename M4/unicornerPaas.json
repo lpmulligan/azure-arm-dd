@@ -31,8 +31,16 @@
     "webAppLocations": {
       "type": "array",
       "defaultValue": [ "North Central US", "South Central US", "East US 2", "West US 2" ]
+    },
+    "RepoURL": {
+      "type": "string",
+      "defaultValue": "https://github.com/davidebbo-test/Mvc52Application.git"
+    },
+    "branch": {
+      "type": "string",
+      "defaultValue": "master"
     }
-  },
+    },
   "variables": {
 
 
@@ -78,7 +86,23 @@
       "properties": {
         "name": "[concat(parameters('webAppNamePrefix'),'-site-',copyIndex())]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', concat(parameters('webAppNamePrefix'),'-farm-',copyIndex()))]"
-      }
+      },
+      "resources": [
+        {
+          "name": "web",
+          "type": "sourcecontrols",
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[concat(parameters('webAppNamePrefix'),'-site-',copyIndex())]"
+          ],
+          "properties": {
+            "RepoUrl": "[parameters('RepoURL')]",
+            "branch": "[parameters('branch')]",
+            "IsManualIntegration":  true
+          }
+
+        }
+      ]
     },
     {
       "name": "[concat(parameters('webAppNamePrefix'),'-tm')]",
