@@ -21,6 +21,49 @@
       "type": "string",
       "defaultValue": "lpm-unicorner-vnet-azure",
       "minLength": 1
+    },
+    "vpnPrivateConnectionName": {
+      "type": "string",
+      "defaultValue": "lpm-unicornmer-vpn-private",
+      "minLength": 1
+    },
+    "vpnAzureConnectionName": {
+      "type": "string",
+      "defaultValue": "lpm-unicornmer-vpn-azure",
+      "minLength": 1
+    },
+    "privateGatewayName": {
+      "type": "string",
+      "defaultValue": "lpm-unicorner-gateway-private",
+      "minLength": 1
+    },
+    "azureGatewayName": {
+      "type": "string",
+      "defaultValue": "lpm-unicorner-gateway-azure",
+      "minLength": 1
+    },
+    "vpnSharedKey": {
+      "type": "string",
+      "defaultValue": "jfkdsjklfj83849382fjdskljfklsd",
+      "minLength": 20
+    },
+    "privateGatewayPublicIpName": {
+      "type": "string",
+      "defaultValue": "lpm-unicorner-gateway-private-ip",
+      "minLength": 1
+    },
+    "azureGatewayPublicIpName": {
+      "type": "string",
+      "defaultValue": "lpm-unicorner-gateway-azure-ip",
+      "minLength": 1
+    },
+    "vpnType": {
+      "type": "string",
+      "defaultValue": "RouteBased",
+      "allowedValues": [
+        "RouteBased",
+        "PolicyBased"
+      ]
     }
   },
   "variables": {
@@ -29,11 +72,20 @@
     "vNetPrivateSubnet1Prefix": "172.16.1.0/24",
     "vNetPrivateSubnet2Name": "private-subnet-2",
     "vNetPrivateSubnet2Prefix": "172.16.2.0/24",
+    "vNetPrivateGatewaySubnetPrefix": "172.16.200.0/24",
     "vNetAzurePrefix": "10.0.0.0/16",
     "vNetAzureSubnet1Name": "azure-subnet-1",
     "vNetAzureSubnet1Prefix": "10.0.1.0/24",
     "vNetAzureSubnet2Name": "azure-subnet-2",
-    "vNetAzureSubnet2Prefix": "10.0.2.0/24"
+    "vNetAzureSubnet2Prefix": "10.0.2.0/24",
+    "vNetAzureGatewaySubnetPrefix": "10.0.200.0/24",
+    "vNetPrivateId": "[resourceId('Microsoft.Network/virtualNetworks/',parameters('vNetPrivateName'))]",
+    "privateGatewaySubnetId": "[concat(variables('vNetPrivateId'), '/subnets/', 'GatewaySubnet')]",
+    "privatePublicIpId": "[resourceId('Microsoft.Network/publicIpAddresses/',parameters('privateGatewayPublicIpName'))]",
+    "vNetAzureId": "[resourceId('Microsoft.Network/virtualNetworks/',parameters('vNetAzureName'))]",
+    "azureGatewaySubnetId": "[concat(variables('vNetazureId'), '/subnets/', 'GatewaySubnet')]",
+    "azurePublicIpId": "[resourceId('Microsoft.Network/publicIpAddresses/',parameters('azureGatewayPublicIpName'))]"
+
   },
   "resources": [
     {
@@ -53,37 +105,43 @@
         "accountType": "[parameters('storageAccountType')[copyIndex()]]"
       }
     },
-      {
-          "name": "[parameters('vNetPrivateName')]",
-          "type": "Microsoft.Network/virtualNetworks",
-          "location": "[resourceGroup().location]",
-          "apiVersion": "2016-03-30",
-          "dependsOn": [ ],
-        "tags": {
-          "displayName": "[parameters('vNetPrivateName')]"
-        },
-          "properties": {
-              "addressSpace": {
-                "addressPrefixes": [
-                  "[variables('vNetPrivatePrefix')]"
-                ]
-              },
-              "subnets": [
-                {
-                  "name": "[variables('vNetPrivateSubnet1Name')]",
-                  "properties": {
-                    "addressPrefix": "[variables('vNetPrivateSubnet1Prefix')]"
-                  }
-                },
-                {
-                  "name": "[variables('vNetPrivateSubnet2Name')]",
-                  "properties": {
-                    "addressPrefix": "[variables('vNetPrivateSubnet2Prefix')]"
-                  }
-                }
-              ]
-          }
+    {
+      "name": "[parameters('vNetPrivateName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "[parameters('vNetPrivateName')]"
       },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vNetPrivatePrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('vNetPrivateSubnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('vNetPrivateSubnet1Prefix')]"
+            }
+          },
+          {
+            "name": "[variables('vNetPrivateSubnet2Name')]",
+            "properties": {
+              "addressPrefix": "[variables('vNetPrivateSubnet2Prefix')]"
+            }
+          },
+          {
+            "name": "GatewaySubnet",
+            "properties": {
+              "addressPrefix": "[variables('vNetPrivateGatewaySubnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
     {
       "name": "[parameters('vNetAzureName')]",
       "type": "Microsoft.Network/virtualNetworks",
@@ -108,11 +166,137 @@
           },
           {
             "name": "[variables('vNetAzureSubnet2Name')]",
+
             "properties": {
               "addressPrefix": "[variables('vNetAzureSubnet2Prefix')]"
             }
+          },
+
+          {
+            "name": "GatewaySubnet",
+            "properties": {
+              "addressPrefix": "[variables('vNetAzureGatewaySubnetPrefix')]"
+            }
           }
         ]
+      }
+    },
+    {
+      "name": "[parameters('vpnPrivateConnectionName')]",
+      "type": "Microsoft.Network/connections",
+      "apiVersion": "2016-12-01",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworkGateways/',parameters('privateGatewayName'))]",
+        "[concat('Microsoft.Network/virtualNetworkGateways/',parameters('azureGatewayName'))]"
+      ],
+      "properties": {
+        "virtualNetworkGateway1": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworkGateways/',parameters('privateGatewayName'))]"
+        },
+        "virtualNetworkGateway2": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworkGateways/',parameters('azureGatewayName'))]"
+        },
+        "connectionType": "VNet2VNet",
+        "routingWeight": 3,
+        "sharedKey": "[parameters('vpnSharedKey')]"
+      }
+    },
+    {
+      "name": "[parameters('vpnAzureConnectionName')]",
+      "type": "Microsoft.Network/connections",
+      "apiVersion": "2016-12-01",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworkGateways/',parameters('privateGatewayName'))]",
+        "[concat('Microsoft.Network/virtualNetworkGateways/',parameters('azureGatewayName'))]"
+      ],
+      "properties": {
+        "virtualNetworkGateway1": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworkGateways/',parameters('azureGatewayName'))]"
+        },
+        "virtualNetworkGateway2": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworkGateways/',parameters('privateGatewayName'))]"
+        },
+        "connectionType": "VNet2VNet",
+        "routingWeight": 3,
+        "sharedKey": "[parameters('vpnSharedKey')]"
+      }
+    },
+    {
+      "name": "[parameters('privateGatewayName')]",
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "apiVersion": "2016-12-01",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIpAddresses/',parameters('privateGatewayPublicIpName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/',parameters('vNetPrivateName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('privateGatewaySubnetId')]"
+              },
+              "publicIPAddress": {
+                "id": "[variables('privatePublicIpId')]"
+              }
+            },
+            "name": "vNetGatewayConfig"
+          }
+        ],
+        "gatewayType": "Vpn",
+        "vpnType": "[parameters('vpnType')]",
+        "enableBgp": false
+      }
+    },
+    {
+      "name": "[parameters('azureGatewayName')]",
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "apiVersion": "2016-12-01",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIpAddresses/',parameters('azureGatewayPublicIpName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/',parameters('vNetPrivateName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('azureGatewaySubnetId')]"
+              },
+              "publicIPAddress": {
+                "id": "[variables('azurePublicIpId')]"
+              }
+            },
+            "name": "vNetGatewayConfig"
+          }
+        ],
+        "gatewayType": "Vpn",
+        "vpnType": "[parameters('vpnType')]",
+        "enableBgp": false
+      }
+    },
+    {
+      "name": "[parameters('privateGatewayPublicIpName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "name": "[parameters('azureGatewayPublicIpName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
       }
     }
   ],
