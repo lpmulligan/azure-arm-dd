@@ -1,12 +1,12 @@
 ﻿### Define variables
 {
-$location = 'Australia Southeast'
-$resourceGroupName = 'unicorner-iaas'
-$resourceDeploymentName = 'unicorner-iaas-deployment'
-$templatePath = $env:SystemDrive + '\pluralsight'
+$location = 'North Central US'
+$resourceGroupName = 'lpm-unicorner-iaas'
+$resourceDeploymentName = 'lpm-unicorner-iaas-deployment'
+$templatePath = $env:USERPROFILE + '\Development\Azure\azure-arm-dd\M5'
 $templateFile = 'unicornerIaas.json'
 $template = $templatePath + '\' + $templateFile
-$password = "Un1c0rn3R"
+$password = "Husker24u!"
 $securePassword = $password | ConvertTo-SecureString -AsPlainText -Force
 }
 
