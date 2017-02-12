@@ -18,11 +18,12 @@ New-AzureRmResourceGroup `
     -Verbose -Force
 }
 
+
 ### Deploy Resources
 {
 
 $additionalParameters = New-Object -TypeName Hashtable
-$additionalParameters['vmPrivateAdminPassword'] = $securePassword
+$additionalParameters['vmAdminPassword'] = $securePassword
 
 New-AzureRmResourceGroupDeployment `
     -Name $resourceDeploymentName `
