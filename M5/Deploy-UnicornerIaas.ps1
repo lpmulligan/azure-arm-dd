@@ -22,7 +22,7 @@ New-AzureRmResourceGroup `
 {
 
 $additionalParameters = New-Object -TypeName Hashtable
-$additionalParameters['vmAdminPassword'] = $securePassword
+$additionalParameters['vmPrivateAdminPassword'] = $securePassword
 
 New-AzureRmResourceGroupDeployment `
     -Name $resourceDeploymentName `
