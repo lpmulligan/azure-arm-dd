@@ -64,7 +64,35 @@
         "RouteBased",
         "PolicyBased"
       ]
-    }
+    },
+      "vmPrivateName": {
+        "type": "string",
+        "defaultValue": "vmPrivate",
+          "minLength": 1
+      },
+      "vmPrivateAdminUserName": {
+        "type": "string",
+        "defaultValue":  "lpmadmin",
+         "minLength": 1
+      },
+      "vmPrivateAdminPassword": {
+          "type": "securestring"
+      },
+      "vmPrivateWindowsOSVersion": {
+          "type": "string", 
+          "defaultValue": "2012-R2-Datacenter",
+          "allowedValues": [
+              "2008-R2-SP1",
+              "2012-Datacenter",
+              "2012-R2-Datacenter",
+              "Windows-Server-Technical-Preview"
+          ]
+      },
+      "vmPrivatePublicIPDnsName": {
+        "type": "string",
+        "defaultValue": "lpm-unicorner-vm",
+          "minLength": 1
+      }
   },
   "variables": {
     "vNetPrivatePrefix": "172.16.0.0/16",
@@ -84,7 +112,16 @@
     "privatePublicIpId": "[resourceId('Microsoft.Network/publicIpAddresses/',parameters('privateGatewayPublicIpName'))]",
     "vNetAzureId": "[resourceId('Microsoft.Network/virtualNetworks/',parameters('vNetAzureName'))]",
     "azureGatewaySubnetId": "[concat(variables('vNetazureId'), '/subnets/', 'GatewaySubnet')]",
-    "azurePublicIpId": "[resourceId('Microsoft.Network/publicIpAddresses/',parameters('azureGatewayPublicIpName'))]"
+    "azurePublicIpId": "[resourceId('Microsoft.Network/publicIpAddresses/',parameters('azureGatewayPublicIpName'))]",
+    "vmPrivateImagePublisher": "MicrosoftWindowsServer",
+    "vmPrivateImageOffer": "WindowsServer",
+    "vmPrivateOSDiskName": "vmPrivateOSDisk",
+    "vmPrivateVmSize": "Standard_D1_v2",
+    "vmPrivateVnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetPrivateName'))]",
+    "vmPrivateSubnetRef": "[concat(variables('vmPrivateVnetID'), '/subnets/', variables('vNetPrivateSubnet1Name'))]",
+    "vmPrivateStorageAccountContainerName": "vhds",
+    "vmPrivateNicName": "[concat(parameters('vmPrivateName'),'-','nic-0')]",
+    "vmPrivatePublicIPName": "vmPrivatePublicIP"
 
   },
   "resources": [
@@ -298,7 +335,98 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
       }
-    }
+    },
+      {
+          "name": "[variables('vmPrivateNicName')]",
+          "type": "Microsoft.Network/networkInterfaces",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [
+              "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetPrivateName'))]",
+              "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPrivatePublicIPName'))]"
+          ],
+        "tags": {
+          "displayName": "[variables('vmPrivateNicName')] "
+        },
+          "properties": {
+              "ipConfigurations": [
+                  {
+                      "name": "ipconfig1",
+                      "properties": {
+                          "privateIPAllocationMethod": "Dynamic",
+                          "subnet": {
+                              "id": "[variables('vmPrivateSubnetRef')]"
+                          },
+                          "publicIPAddress": {
+                              "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPrivatePublicIPName'))]"
+                          }
+                      }
+                  }
+              ]
+          }
+      },
+      {
+          "name": "[parameters('vmPrivateName')]",
+          "type": "Microsoft.Compute/virtualMachines",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+              "[resourceId('Microsoft.Storage/storageAccounts/', concat(parameters('storageAccountPrefix'),'sa','0'))]",
+              "[resourceId('Microsoft.Network/networkInterfaces/', variables('vmPrivateNicName'))]"
+          ],
+        "tags": {
+          "displayName": "[parameters('vmPrivateName')]"
+        },
+          "properties": {
+              "hardwareProfile": {
+                  "vmSize": "[variables('vmPrivateVmSize')]"
+              },
+              "osProfile": {
+                  "computerName": "[parameters('vmPrivateName')]",
+                  "adminUsername": "[parameters('vmPrivateAdminUsername')]",
+                  "adminPassword": "[parameters('vmPrivateAdminPassword')]"
+              },
+              "storageProfile": {
+                  "imageReference": {
+                      "publisher": "[variables('vmPrivateImagePublisher')]",
+                      "offer": "[variables('vmPrivateImageOffer')]",
+                      "sku": "[parameters('vmPrivateWindowsOSVersion')]",
+                      "version": "latest"
+                  },
+                  "osDisk": {
+                      "name": "vmPrivateOSDisk",
+                      "vhd": {
+                          "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', concat(parameters('storageAccountPrefix'),'sa','0')), '2016-01-01').primaryEndpoints.blob, variables('vmPrivateStorageAccountContainerName'), '/', variables('vmPrivateOSDiskName'), '.vhd')]"
+                      },
+                      "caching": "ReadWrite",
+                      "createOption": "FromImage"
+                  }
+              },
+              "networkProfile": {
+                  "networkInterfaces": [
+                      {
+                          "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmPrivateNicName'))]"
+                      }
+                  ]
+              }
+          }
+      },
+      {
+          "name": "[variables('vmPrivatePublicIPName')]",
+          "type": "Microsoft.Network/publicIPAddresses",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [ ],
+          "tags": {
+              "displayName": "vmPrivatePublicIP"
+          },
+          "properties": {
+              "publicIPAllocationMethod": "Dynamic",
+              "dnsSettings": {
+                  "domainNameLabel": "[parameters('vmPrivatePublicIPDnsName')]"
+              }
+          }
+      }
   ],
   "outputs": {}
 }
