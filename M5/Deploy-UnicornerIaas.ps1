@@ -3,7 +3,8 @@
 $location = 'North Central US'
 $resourceGroupName = 'lpm-unicorner-iaas'
 $resourceDeploymentName = 'lpm-unicorner-iaas-deployment'
-$templatePath = $env:USERPROFILE + '\Development\Azure\azure-arm-dd\M5'
+##$templatePath = $env:USERPROFILE + 'Development\Azure\azure-arm-dd\M5'
+$templatePath = "D:\mulligal\Documents\Dropbox\" + 'Development\Azure\azure-arm-dd\M5'
 $templateFile = 'unicornerIaas.json'
 $template = $templatePath + '\' + $templateFile
 $password = "Husker24u!"
@@ -18,6 +19,7 @@ New-AzureRmResourceGroup `
     -Verbose -Force
 }
 
+ @additionalParameters `
 
 ### Deploy Resources
 {
