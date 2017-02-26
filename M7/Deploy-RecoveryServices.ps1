@@ -1,7 +1,7 @@
 ﻿
-$recoveryVaultName = 'pluralsight-vault'
-$recoveryVaultRGName = 'pluralsight-recovery-services'
-$recoveryVaultLocation = 'Australia Southeast'
+$recoveryVaultName = 'lpm-arm-dd-vault'
+$recoveryVaultRGName = 'lpm-arm-dd-recovery-services'
+$recoveryVaultLocation = 'North Central US'
 
 ### Create Resource Group
 New-AzureRmResourceGroup `
