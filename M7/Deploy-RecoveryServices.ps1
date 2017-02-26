@@ -9,7 +9,7 @@ New-AzureRmResourceGroup `
     -Location $recoveryVaultLocation `
     -Verbose
 
-### Create Recovery Services Vault
+### Create Recovery Services Vaultlo
 New-AzureRmRecoveryServicesVault `
     -Name $recoveryVaultName `
     -ResourceGroupName $recoveryVaultRGName `
